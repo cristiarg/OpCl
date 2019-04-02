@@ -35,3 +35,6 @@ ipch
 # Visual Sudio .vs stuf that is not needed
 v15
 
+# vim
+*.swp
+
