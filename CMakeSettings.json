@@ -1,0 +1,37 @@
+{
+  "environments": [
+    {
+      "PROJECT_NAME": "OpCl",
+    }
+  ],
+  "configurations": [
+    {
+      "name": "x64-Debug",
+      "description": "OpCl",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\..\\CMakeBuilds_${env.PROJECT_NAME}_${name}",
+      "installRoot": "${projectDir}\\..\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Release",
+      "description": "OpCl",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\..\\CMakeBuilds_${env.PROJECT_NAME}_${name}",
+      "installRoot": "${projectDir}\\..\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    }
+  ]
+}
