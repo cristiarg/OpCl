@@ -5,6 +5,7 @@ O [char]            - Operator
 R [uint32_t]        - Result - integer (to be extended)
 K                   - Ok / ACK
 E [string]          - Error
+Q                   - just quit
 
 
 Notes:
@@ -13,12 +14,16 @@ Communication is synchroneous, based on only one connection.
 Messages run in an alternative fashion, one from client one from server.
 The client sends the first message after the connection is established.
 
-C - Client
-S - Server
-
 After an error from the server, it is considered that it's state is
 erased/flushed.
 
+Operators, one of:
+  + - integer addition
+  - - integer difference
+  * - integer multiplication
+  / - integer divide
+  ^ - exponentiantion
+  % - modulo
 
 Scenario 1:
 -------------------
@@ -30,6 +35,9 @@ Client /  Server
   O +
           R 42
 ...
+...
+  Q
+          K
 
 Scenario 2:
 -------------------
@@ -47,4 +55,7 @@ Client /  Server
   O *
           R 42
 ...
+...
+  Q
+          K
 

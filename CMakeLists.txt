@@ -7,8 +7,9 @@ cmake_minimum_required (VERSION 3.8)
 add_executable (OpCl
     "WSAInitializer.cpp" "WSAInitializer.h"
     "NetworkAddress.cpp" "NetworkAddress.h"
-    "SocketMessage.cpp" "SocketMessage.h"
+    "SocketClient.cpp" "SocketClient.h"
     "OpenThenClose.h"
+    "Protocol.cpp" "Protocol.h"
     "OpCl.cpp")
 
 add_definitions(/std:c++17)

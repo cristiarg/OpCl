@@ -1,21 +1,20 @@
-#include "SocketMessage.h"
+#include "SocketClient.h"
 
 #include <cassert>
 #include <vector>
 
-CSocketMessage::CSocketMessage( /*const std::string& ac_sInterfaceAddress, const int ac_nPort*/ const CNetworkAddress& na )
-  : // wsa init will be the first thing that happens
-    mc_nSocket( INVALID_SOCKET )
-  , mv_NetworkAddress { na } /*(ac_sInterfaceAddress.c_str() , ac_nPort, SOCK_STREAM, IPPROTO_TCP)*/
+CSocketClient::CSocketClient( /*const std::string& ac_sInterfaceAddress, const int ac_nPort*/ const CNetworkAddress& na )
+  : mc_nSocket( INVALID_SOCKET )
+  , mv_NetworkAddress { na }
 {
 }
 
-CSocketMessage::~CSocketMessage()
+CSocketClient::~CSocketClient()
 {
   mp_Close();
 }
 
-void CSocketMessage::mp_Open()
+void CSocketClient::mp_Open()
 {
   if ( mc_nSocket == INVALID_SOCKET ) {
     // only one address should have been found; connect to it
@@ -58,7 +57,7 @@ void CSocketMessage::mp_Open()
   }
 }
 
-void CSocketMessage::mp_Close()
+void CSocketClient::mp_Close()
 {
   if ( mc_nSocket != INVALID_SOCKET ) {
     // first, shutdown
@@ -108,139 +107,93 @@ void CSocketMessage::mp_Close()
   }
 }
 
-bool CSocketMessage::mf_bIsOpen() const
+bool CSocketClient::mf_bIsOpen() const
 {
   return ( mc_nSocket != INVALID_SOCKET );
 }
 
-CSocketMessage::mt_eRecvStatus CSocketMessage::mf_eRecv(std::string& str)
+SOCKET CSocketClient::get() const
 {
-  assert( mc_nSocket != INVALID_SOCKET );
-
-  // message length
-  //
-  std::uint32_t nLengthBuffer;
-  const auto c_RawRecvMessageLengthResult = mf_nRawRecv(reinterpret_cast<char*>(&nLengthBuffer), sizeof(std::uint32_t));
-  const auto c_eRawRecvMessageLengthStatus = std::get< 0 >( c_RawRecvMessageLengthResult );
-  switch ( c_eRawRecvMessageLengthStatus ) {
-    case mc_eOK: {
-      const auto c_nRawRecvMessageLengthValue = std::get< 1 >( c_RawRecvMessageLengthResult );
-      if ( c_nRawRecvMessageLengthValue == sizeof( std::uint32_t ) ) {
-
-        if ( nLengthBuffer > 0 ) {
-          // message
-          //
-          str.resize( nLengthBuffer );
-          const auto c_RawRecvMessageDataResult = mf_nRawRecv(str.data(), nLengthBuffer);
-          const auto c_eRawRecvMessageDataStatus = std::get< 0 >( c_RawRecvMessageDataResult );
-          switch ( c_eRawRecvMessageDataStatus ) {
-            case mc_eOK: {
-              const auto c_nRawRecvMessageData_MessageLength = std::get< 1 >( c_RawRecvMessageDataResult );
-              if ( c_nRawRecvMessageData_MessageLength == nLengthBuffer ) {
-                return mc_eOK;
-              } else {
-                assert( c_nRawRecvMessageData_MessageLength == nLengthBuffer );
-                return mc_eScrambledData;
-              }
-              break;
-            }
-            case mc_eTimeOut:
-            case mc_eConnectionGracefullyClosed:
-            case mc_eConnectionResetByPeer:
-            {
-              return c_eRawRecvMessageDataStatus;
-              break;
-            }
-            case mc_eUnknownError: {
-              assert( "UnknownError needs to be properly translated" == nullptr );
-              return mc_eUnknownError;
-              break;
-            }
-            default:
-              assert( "MessageLengthStatus not properly handled" == nullptr );
-          }
-        } else {
-          // we receive a zero size, not at the end of the simulation, but
-          // when data is exhausted due to exceptional scenarios (e.g.: crashes)
-          return mc_eDataExhausted;
-        }
-
-      } else {
-        // scrambled message
-        assert( c_nRawRecvMessageLengthValue == sizeof( std::uint32_t ) );
-        return mc_eScrambledData;
-      }
-      break;
-    }
-    case mc_eTimeOut:
-    case mc_eConnectionGracefullyClosed:
-    case mc_eConnectionResetByPeer:
-    {
-      return c_eRawRecvMessageLengthStatus;
-      break;
-    }
-    case mc_eUnknownError: {
-      assert( "UnknownError needs to be properly translated" == nullptr );
-      return mc_eUnknownError;
-      break;
-    }
-    default:
-      assert( "MessageLengthStatus not properly handled" == nullptr );
-  }
-
-  return mc_eOK;
+  return mc_nSocket;
 }
 
-CSocketMessage::mt_RecvInfo CSocketMessage::mf_nRawRecv(char* const ac_pBuffer, const int ac_nCount)
-{
-  char* pBuffer = ac_pBuffer;
-  int nRecvCount = 0;
-  int nStillToRecvCount = ac_nCount;
-  while (nStillToRecvCount > 0 ) {
-    const int c_nResult = recv(mc_nSocket, pBuffer, nStillToRecvCount, 0);
-      // from the docs: If no error occurs, recv returns the number of bytes received and the buffer pointed to by the
-      // buf parameter will contain this data received.
-      // If the connection has been gracefully closed, the return value is zero.
-    if (c_nResult > 0)
-    {
-      nRecvCount += c_nResult;
-      pBuffer += c_nResult;
-      nStillToRecvCount -= c_nResult;
-      assert(nStillToRecvCount >= 0);
-    }
-    else if (c_nResult == 0)
-    {
-      const int c_eWSALastError = WSAGetLastError();
-      assert( c_eWSALastError == 0 );
-      printf("INFO connection gracefully closed by remote (apparently)\n");
-      return std::make_tuple( mc_eConnectionGracefullyClosed , nRecvCount  );
-    }
-    else //(c_nResult < 0)
-    {
-      const int c_eWSALastError = WSAGetLastError();
-      if (c_eWSALastError == WSAETIMEDOUT)
-      {
-        fprintf(stderr, "ERROR recv: timeout\n");
-        return std::make_tuple( mc_eTimeOut , nRecvCount );
-      }
-      else if ( c_eWSALastError == WSAECONNRESET )
-      {
-        fprintf(stderr, "ERROR recv: connection reset by peer\n");
-        closesocket(mc_nSocket);
-        mc_nSocket = INVALID_SOCKET;
-        return std::make_tuple( mc_eConnectionResetByPeer , nRecvCount );
-      }
-      else
-      {
-        fprintf(stderr, "ERROR recv: undistinguished error (%d)\n", c_eWSALastError);
-        closesocket(mc_nSocket);
-        mc_nSocket = INVALID_SOCKET;
-        return std::make_tuple( mc_eUnknownError , nRecvCount );
-      }
-    }
-  }
-  return std::make_tuple( mc_eOK , nRecvCount );
-}
+//CSocketMessage::mt_eRecvStatus CSocketMessage::mf_eRecv(std::string& str)
+//{
+//  assert( mc_nSocket != INVALID_SOCKET );
+//
+//  // message length
+//  //
+//  std::uint32_t nLengthBuffer;
+//  const auto c_RawRecvMessageLengthResult = mf_nRawRecv(reinterpret_cast<char*>(&nLengthBuffer), sizeof(std::uint32_t));
+//  const auto c_eRawRecvMessageLengthStatus = std::get< 0 >( c_RawRecvMessageLengthResult );
+//  switch ( c_eRawRecvMessageLengthStatus ) {
+//    case mc_eOK: {
+//      const auto c_nRawRecvMessageLengthValue = std::get< 1 >( c_RawRecvMessageLengthResult );
+//      if ( c_nRawRecvMessageLengthValue == sizeof( std::uint32_t ) ) {
+//
+//        if ( nLengthBuffer > 0 ) {
+//          // message
+//          //
+//          str.resize( nLengthBuffer );
+//          const auto c_RawRecvMessageDataResult = mf_nRawRecv(str.data(), nLengthBuffer);
+//          const auto c_eRawRecvMessageDataStatus = std::get< 0 >( c_RawRecvMessageDataResult );
+//          switch ( c_eRawRecvMessageDataStatus ) {
+//            case mc_eOK: {
+//              const auto c_nRawRecvMessageData_MessageLength = std::get< 1 >( c_RawRecvMessageDataResult );
+//              if ( c_nRawRecvMessageData_MessageLength == nLengthBuffer ) {
+//                return mc_eOK;
+//              } else {
+//                assert( c_nRawRecvMessageData_MessageLength == nLengthBuffer );
+//                return mc_eScrambledData;
+//              }
+//              break;
+//            }
+//            case mc_eTimeOut:
+//            case mc_eConnectionGracefullyClosed:
+//            case mc_eConnectionResetByPeer:
+//            {
+//              return c_eRawRecvMessageDataStatus;
+//              break;
+//            }
+//            case mc_eUnknownError: {
+//              assert( "UnknownError needs to be properly translated" == nullptr );
+//              return mc_eUnknownError;
+//              break;
+//            }
+//            default:
+//              assert( "MessageLengthStatus not properly handled" == nullptr );
+//          }
+//        } else {
+//          // we receive a zero size, not at the end of the simulation, but
+//          // when data is exhausted due to exceptional scenarios (e.g.: crashes)
+//          return mc_eDataExhausted;
+//        }
+//
+//      } else {
+//        // scrambled message
+//        assert( c_nRawRecvMessageLengthValue == sizeof( std::uint32_t ) );
+//        return mc_eScrambledData;
+//      }
+//      break;
+//    }
+//    case mc_eTimeOut:
+//    case mc_eConnectionGracefullyClosed:
+//    case mc_eConnectionResetByPeer:
+//    {
+//      return c_eRawRecvMessageLengthStatus;
+//      break;
+//    }
+//    case mc_eUnknownError: {
+//      assert( "UnknownError needs to be properly translated" == nullptr );
+//      return mc_eUnknownError;
+//      break;
+//    }
+//    default:
+//      assert( "MessageLengthStatus not properly handled" == nullptr );
+//  }
+//
+//  return mc_eOK;
+//}
 
 //CSocketMessage::mt_RecvInfo CSocketMessage::mf_nRawRecv(char* const ac_pBuffer, const int ac_nCount)
 //{
@@ -264,7 +217,7 @@ CSocketMessage::mt_RecvInfo CSocketMessage::mf_nRawRecv(char* const ac_pBuffer, 
 //      const int c_eWSALastError = WSAGetLastError();
 //      assert( c_eWSALastError == 0 );
 //      printf("INFO connection gracefully closed by remote (apparently)\n");
-//      return std::make_tuple( nRecvCount  , mc_eConnectionGracefullyClosed );
+//      return std::make_tuple( mc_eConnectionGracefullyClosed , nRecvCount  );
 //    }
 //    else //(c_nResult < 0)
 //    {
@@ -272,23 +225,24 @@ CSocketMessage::mt_RecvInfo CSocketMessage::mf_nRawRecv(char* const ac_pBuffer, 
 //      if (c_eWSALastError == WSAETIMEDOUT)
 //      {
 //        fprintf(stderr, "ERROR recv: timeout\n");
-//        return std::make_tuple( nRecvCount , mc_eTimeOut );
+//        return std::make_tuple( mc_eTimeOut , nRecvCount );
 //      }
 //      else if ( c_eWSALastError == WSAECONNRESET )
 //      {
 //        fprintf(stderr, "ERROR recv: connection reset by peer\n");
 //        closesocket(mc_nSocket);
 //        mc_nSocket = INVALID_SOCKET;
-//        return std::make_tuple( nRecvCount , mc_eConnectionResetByPeer );
+//        return std::make_tuple( mc_eConnectionResetByPeer , nRecvCount );
 //      }
 //      else
 //      {
 //        fprintf(stderr, "ERROR recv: undistinguished error (%d)\n", c_eWSALastError);
 //        closesocket(mc_nSocket);
 //        mc_nSocket = INVALID_SOCKET;
-//        return std::make_tuple( nRecvCount , mc_eUnknownError );
+//        return std::make_tuple( mc_eUnknownError , nRecvCount );
 //      }
 //    }
 //  }
-//  return std::make_tuple( nRecvCount , mc_eOK );
+//  return std::make_tuple( mc_eOK , nRecvCount );
 //}
+
