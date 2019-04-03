@@ -10,6 +10,7 @@ add_executable (OpCl
     "SocketClient.cpp" "SocketClient.h"
     "OpenThenClose.h"
     "Protocol.cpp" "Protocol.h"
+    "MessageDecoder.cpp" "MessageDecoder.h"
     "OpCl.cpp")
 
 add_definitions(/std:c++17)

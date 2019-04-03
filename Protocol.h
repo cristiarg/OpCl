@@ -10,14 +10,28 @@ enum class EStatus {
     , eConnectionGracefullyClosed
     , eConnectionResetByPeer
         // the difference between the two above is kind of fuzzy
-    , eScrambledData
-    , eDataExhausted
+    //, eScrambledData
+    //, eDataExhausted
         // there are two ways of signalling end of data by the server
         //  - the regular one: using the application protocol
         //  - the second one is this, and it is exceptional as it usually
         //    means that something is wrong on the server side
     , eUnknownError
 };
+
+static std::string statusToMessage(const EStatus st)
+{
+  switch (st) {
+    case EStatus::eOK                         : return "OK";
+    case EStatus::eTimeOut                    : return "Timeout";
+    case EStatus::eConnectionGracefullyClosed : return "Connection gracefully closed";
+    case EStatus::eConnectionResetByPeer      : return "Connection reset by peer";
+    case EStatus::eUnknownError               : return "Unknown error";
+    default:
+      return std::string();
+      break;
+  }
+}
 
 class CProtocol final {
 public:

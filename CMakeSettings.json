@@ -7,7 +7,6 @@
   "configurations": [
     {
       "name": "x64-Debug",
-      "description": "OpCl",
       "generator": "Ninja",
       "configurationType": "Debug",
       "inheritEnvironments": [
@@ -21,7 +20,6 @@
     },
     {
       "name": "x64-Release",
-      "description": "OpCl",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
       "inheritEnvironments": [
