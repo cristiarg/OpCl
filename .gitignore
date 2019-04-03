@@ -34,8 +34,11 @@ ipch
 
 # Visual Sudio .vs stuf that is not needed
 v15
-.vs/slnx.sqlite
+*.sqlite
 
-# vim
+# vim files
 *.swp
+
+# WinMerge files
+*.bak
 

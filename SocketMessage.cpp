@@ -3,10 +3,10 @@
 #include <cassert>
 #include <vector>
 
-CSocketMessage::CSocketMessage( const std::string& ac_sInterfaceAddress, const int ac_nPort )
+CSocketMessage::CSocketMessage( /*const std::string& ac_sInterfaceAddress, const int ac_nPort*/ const CNetworkAddress& na )
   : // wsa init will be the first thing that happens
     mc_nSocket( INVALID_SOCKET )
-  , mv_NetworkAddress(ac_sInterfaceAddress.c_str() , ac_nPort, SOCK_STREAM, IPPROTO_TCP)
+  , mv_NetworkAddress { na } /*(ac_sInterfaceAddress.c_str() , ac_nPort, SOCK_STREAM, IPPROTO_TCP)*/
 {
 }
 
@@ -25,7 +25,6 @@ void CSocketMessage::mp_Open()
     if (mc_nSocket < 0) {
       fprintf(stderr, "ERROR: opening stream socket\n");
       perror("ERROR opening stream socket");
-      mc_WSAInit.mp_Cleanup();
       mc_nSocket = INVALID_SOCKET;
     }
     else {
@@ -39,7 +38,6 @@ void CSocketMessage::mp_Open()
       perror("ERROR connecting stream socket");
       closesocket(mc_nSocket);
       mc_nSocket = INVALID_SOCKET;
-      mc_WSAInit.mp_Cleanup();
     }
     else {
       printf("SUCCESS connecting stream socket\n");
@@ -53,7 +51,6 @@ void CSocketMessage::mp_Open()
     //  perror("ERROR setting timeout on socket");
     //  closesocket(mc_nSocket);
     //  mc_nSocket = INVALID_SOCKET;
-    //  mc_WSAInit.mp_Cleanup();
     //}
     //else {
     //  printf("SUCCESS setting timeout on socket\n");
@@ -122,13 +119,13 @@ CSocketMessage::mt_eRecvStatus CSocketMessage::mf_eRecv(std::string& str)
 
   // message length
   //
-  std::int32_t nLengthBuffer;
-  const auto c_RawRecvMessageLengthResult = mf_nRawRecv(reinterpret_cast<char*>(&nLengthBuffer), sizeof(std::int32_t));
+  std::uint32_t nLengthBuffer;
+  const auto c_RawRecvMessageLengthResult = mf_nRawRecv(reinterpret_cast<char*>(&nLengthBuffer), sizeof(std::uint32_t));
   const auto c_eRawRecvMessageLengthStatus = std::get< 0 >( c_RawRecvMessageLengthResult );
   switch ( c_eRawRecvMessageLengthStatus ) {
     case mc_eOK: {
       const auto c_nRawRecvMessageLengthValue = std::get< 1 >( c_RawRecvMessageLengthResult );
-      if ( c_nRawRecvMessageLengthValue == sizeof( std::int32_t ) ) {
+      if ( c_nRawRecvMessageLengthValue == sizeof( std::uint32_t ) ) {
 
         if ( nLengthBuffer > 0 ) {
           // message
@@ -170,7 +167,7 @@ CSocketMessage::mt_eRecvStatus CSocketMessage::mf_eRecv(std::string& str)
 
       } else {
         // scrambled message
-        assert( c_nRawRecvMessageLengthValue == sizeof( std::int32_t ) );
+        assert( c_nRawRecvMessageLengthValue == sizeof( std::uint32_t ) );
         return mc_eScrambledData;
       }
       break;

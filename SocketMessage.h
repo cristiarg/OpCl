@@ -1,7 +1,8 @@
 #pragma once
 
-#include "WSAInitializer.h"
 #include "NetworkAddress.h"
+
+#include <Winsock2.h>
 
 #include <string>
 #include <tuple>
@@ -27,7 +28,7 @@ private:
   typedef std::tuple< mt_eRecvStatus , int > mt_RecvInfo;
 
 public:
-  CSocketMessage( const std::string& ac_sInterfaceAddress, const int ac_nPort );
+  CSocketMessage( /*const std::string& ac_sInterfaceAddress, const int ac_nPort*/ const CNetworkAddress& na );
   ~CSocketMessage();
 
   mt_eRecvStatus mf_eRecv(std::string& str);
@@ -40,8 +41,6 @@ private:
   mt_RecvInfo mf_nRawRecv(char* const ac_pBuffer, const int ac_nCount);
 
 private:
-  CWSAInitializer mc_WSAInit;
-    // NOTE: must be the first member to ensure wsa subsystem initialization is the first thing that happens
+  const CNetworkAddress& mv_NetworkAddress;
   SOCKET mc_nSocket;
-  CNetworkAddress mv_NetworkAddress;
 };

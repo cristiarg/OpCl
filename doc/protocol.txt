@@ -1,10 +1,10 @@
 Messages:
 -------------------
-V[std::uint32_t]    - Value - integer (to be extended)
-O[char]             - Operator
+V [std::uint32_t]   - Value - integer (to be extended)
+O [char]            - Operator
+R [uint32_t]        - Result - integer (to be extended)
 K                   - Ok / ACK
-E[string]           - Error
-R[uint32_t]         - Result - integer (to be extended)
+E [string]          - Error
 
 
 Notes:
@@ -23,28 +23,28 @@ erased/flushed.
 Scenario 1:
 -------------------
 Client /  Server 
-  V43
+  V 43
           K
-  V-1
+  V -1
           K
-  O+
-          R42
+  O +
+          R 42
 ...
 
 Scenario 2:
 -------------------
 Client /  Server 
-  V23
+  V 23
           K
-  V4
+  V 4
           K
-  V5
-          E
-  V7
+  V 5
+          E Too many operands
+  V 7
           K
-  V6
+  V 6
           K
-  O*
-          R42
+  O *
+          R 42
 ...
 
