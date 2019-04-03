@@ -1,0 +1,50 @@
+Messages:
+-------------------
+V[std::uint32_t]    - Value - integer (to be extended)
+O[char]             - Operator
+K                   - Ok / ACK
+E[string]           - Error
+R[uint32_t]         - Result - integer (to be extended)
+
+
+Notes:
+-------------------
+Communication is synchroneous, based on only one connection.
+Messages run in an alternative fashion, one from client one from server.
+The client sends the first message after the connection is established.
+
+C - Client
+S - Server
+
+After an error from the server, it is considered that it's state is
+erased/flushed.
+
+
+Scenario 1:
+-------------------
+Client /  Server 
+  V43
+          K
+  V-1
+          K
+  O+
+          R42
+...
+
+Scenario 2:
+-------------------
+Client /  Server 
+  V23
+          K
+  V4
+          K
+  V5
+          E
+  V7
+          K
+  V6
+          K
+  O*
+          R42
+...
+

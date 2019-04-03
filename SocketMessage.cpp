@@ -45,19 +45,19 @@ void CSocketMessage::mp_Open()
       printf("SUCCESS connecting stream socket\n");
     }
 
-    // timeout on socket
-    DWORD timeOutMilli = static_cast< DWORD >( /*sc_dfSocketReceiveTimeoutSeconds*/ 5 * 1000 );
-    if ( setsockopt( mc_nSocket, SOL_SOCKET, SO_RCVTIMEO, ( char* )&timeOutMilli, sizeof( timeOutMilli ) ) < 0 ) {
-      const int c_eWSALastError = WSAGetLastError();
-      fprintf(stderr, "ERROR: setting timeout on socket: %i\n", c_eWSALastError);
-      perror("ERROR setting timeout on socket");
-      closesocket(mc_nSocket);
-      mc_nSocket = INVALID_SOCKET;
-      mc_WSAInit.mp_Cleanup();
-    }
-    else {
-      printf("SUCCESS setting timeout on socket\n");
-    }
+    //// timeout on socket
+    //DWORD timeOutMilli = static_cast< DWORD >( /*sc_dfSocketReceiveTimeoutSeconds*/ 5 * 1000 );
+    //if ( setsockopt( mc_nSocket, SOL_SOCKET, SO_RCVTIMEO, ( char* )&timeOutMilli, sizeof( timeOutMilli ) ) < 0 ) {
+    //  const int c_eWSALastError = WSAGetLastError();
+    //  fprintf(stderr, "ERROR: setting timeout on socket: %i\n", c_eWSALastError);
+    //  perror("ERROR setting timeout on socket");
+    //  closesocket(mc_nSocket);
+    //  mc_nSocket = INVALID_SOCKET;
+    //  mc_WSAInit.mp_Cleanup();
+    //}
+    //else {
+    //  printf("SUCCESS setting timeout on socket\n");
+    //}
   }
 }
 
