@@ -13,6 +13,8 @@
 #include <iostream>
 #include <random>
 #include <functional>
+#include <thread>
+#include <chrono>
 
 bool scen00(CProtocol& prot, int val1, int val2, char op)
 {
@@ -41,11 +43,11 @@ bool scen00(CProtocol& prot, int val1, int val2, char op)
   if (decRespValue1.getType() != EMessageType::eOK) {
     if (decRespValue1.getType() == EMessageType::eError) {
       std::cout << "ERROR from server: " << decRespValue1.getErrorMessage() << std::endl;
-      //return false;
+      return true;
     }
     else {
       std::cout << "ERROR from server: <unspecified>" << std::endl;
-      //return false;
+      return true;
     }
   }
 
@@ -70,11 +72,11 @@ bool scen00(CProtocol& prot, int val1, int val2, char op)
   if (decRespValue2.getType() != EMessageType::eOK) {
     if (decRespValue2.getType() == EMessageType::eError) {
       std::cout << "ERROR from server: " << decRespValue2.getErrorMessage() << std::endl;
-      //return false;
+      return true;
     }
     else {
       std::cout << "ERROR from server: <unspecified>" << std::endl;
-      //return false;
+      return true;
     }
   }
 
@@ -126,9 +128,13 @@ int main()
 
   CSocketClient socketClient { networkAddress };
 
-  {
+  int tryCount { 10 };
+  while (tryCount > 0) {
     TOpenThenClose< CSocketClient > socketClientOpened(socketClient);
+
     if (socketClient.mf_bIsOpen()) {
+      tryCount = 0;
+
       CProtocol prot { socketClient.get() };
 
       std::random_device rd;
@@ -142,12 +148,14 @@ int main()
       }
     }
     else {
-      // TODO
+      --tryCount;
+      std::cout << "ERROR connecting to server; waiting for a few seconds... (" << tryCount << " tries left)" << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
     }
   }
 
-  std::cout << "Execution terminated. Press any key..";
-  getchar();
+  std::cout << "Execution terminated. Press Enter to close..";
+  std::cin.get();
 
 	return 0;
 }

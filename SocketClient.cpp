@@ -23,7 +23,7 @@ void CSocketClient::mp_Open()
     mc_nSocket = socket(mv_NetworkAddress.mf_nFamily(), mv_NetworkAddress.mf_nSockType(), mv_NetworkAddress.mf_nProtocol());
     if (mc_nSocket < 0) {
       fprintf(stderr, "ERROR: opening stream socket\n");
-      perror("ERROR opening stream socket");
+      //perror("ERROR opening stream socket");
       mc_nSocket = INVALID_SOCKET;
     }
     else {
@@ -34,7 +34,7 @@ void CSocketClient::mp_Open()
     const auto c_nResultConnect = connect(mc_nSocket, mv_NetworkAddress.mf_p(), mv_NetworkAddress.mf_nSize());
     if (c_nResultConnect == SOCKET_ERROR) {
       fprintf(stderr, "ERROR: connecting stream socket\n");
-      perror("ERROR connecting stream socket");
+      //perror("ERROR connecting stream socket");
       closesocket(mc_nSocket);
       mc_nSocket = INVALID_SOCKET;
     }
@@ -67,35 +67,35 @@ void CSocketClient::mp_Close()
       switch ( c_nWSALastError ) {
         case WSAECONNABORTED :
           fprintf(stderr, "ERROR: shutting down socket: WSAECONNABORTED\n");
-          perror("ERROR: shutting down socket: WSAECONNABORTED");
+          //perror("ERROR: shutting down socket: WSAECONNABORTED");
           break;
         case WSAECONNRESET :
           fprintf(stderr, "ERROR: shutting down socket: WSAECONNRESET\n");
-          perror("ERROR: shutting down socket: WSAECONNRESET");
+          //perror("ERROR: shutting down socket: WSAECONNRESET");
           break;
         case WSAEINPROGRESS :
           fprintf(stderr, "ERROR: shutting down socket: WSAEINPROGRESS\n");
-          perror("ERROR: shutting down socket: WSAEINPROGRESS");
+          //perror("ERROR: shutting down socket: WSAEINPROGRESS");
           break;
         case WSAEINVAL :
           fprintf(stderr, "ERROR: shutting down socket: WSAEINVAL\n");
-          perror("ERROR: shutting down socket: WSAEINVAL");
+          //perror("ERROR: shutting down socket: WSAEINVAL");
           break;
         case WSAENETDOWN :
           fprintf(stderr, "ERROR: shutting down socket: WSAENETDOWN\n");
-          perror("ERROR: shutting down socket: WSAENETDOWN");
+          //perror("ERROR: shutting down socket: WSAENETDOWN");
           break;
         case WSAENOTCONN :
           fprintf(stderr, "ERROR: shutting down socket: WSAENOTCONN\n");
-          perror("ERROR: shutting down socket: WSAENOTCONN");
+          //perror("ERROR: shutting down socket: WSAENOTCONN");
           break;
         case WSAENOTSOCK :
           fprintf(stderr, "ERROR: shutting down socket: WSAENOTSOCK\n");
-          perror("ERROR: shutting down socket: WSAENOTSOCK");
+          //perror("ERROR: shutting down socket: WSAENOTSOCK");
           break;
         case WSANOTINITIALISED :
           fprintf(stderr, "ERROR: shutting down socket: WSANOTINITIALISED\n");
-          perror("ERROR: shutting down socket: WSANOTINITIALISED");
+          //perror("ERROR: shutting down socket: WSANOTINITIALISED");
           break;
         default :
           assert( false );

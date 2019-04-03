@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <sstream>
-//#include <limits>
 
 CProtocol::CProtocol( SOCKET s )
     : socket_message { s }
@@ -170,7 +169,6 @@ EStatus CProtocol::rawRecv(char* const buff, const int buffLen)
       const int c_eWSALastError = WSAGetLastError();
       assert( c_eWSALastError == 0 );
       printf("INFO connection gracefully closed by remote (apparently)\n");
-      //return nRecvCount;
       closesocket(socket_message);
       return EStatus::eConnectionGracefullyClosed;
     }
@@ -181,7 +179,6 @@ EStatus CProtocol::rawRecv(char* const buff, const int buffLen)
       {
         assert( false ); // not using timeout
         fprintf(stderr, "ERROR recv: timeout\n");
-        //return nRecvCount;
         return EStatus::eTimeOut;
       }
       else if ( c_eWSALastError == WSAECONNRESET )
@@ -189,7 +186,6 @@ EStatus CProtocol::rawRecv(char* const buff, const int buffLen)
         fprintf(stderr, "ERROR recv: connection reset by peer\n");
         closesocket(socket_message);
         socket_message = INVALID_SOCKET;
-        //return nRecvCount;
         return EStatus::eConnectionResetByPeer;
       }
       else
@@ -197,12 +193,10 @@ EStatus CProtocol::rawRecv(char* const buff, const int buffLen)
         fprintf(stderr, "ERROR recv: undistinguished error (%d)\n", c_eWSALastError);
         closesocket(socket_message);
         socket_message = INVALID_SOCKET;
-        //return nRecvCount;
         return EStatus::eUnknownError;
       }
     }
   }
-  //return nRecvCount;
   return EStatus::eOK;
 }
 
