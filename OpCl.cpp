@@ -18,7 +18,7 @@
 #include <thread>
 #include <chrono>
 
-bool scen00(CProtocol& prot, int val1, int val2, char op)
+bool scen01Step(CProtocol& prot, int val1, int val2, char op)
 {
     EStatus st;
 
@@ -115,7 +115,7 @@ bool scen00(CProtocol& prot, int val1, int val2, char op)
     }
 }
 
-bool scen01(CProtocol& prot, const int opType, const int value, const char op)
+bool scen02Step(CProtocol& prot, const int opType, const int value, const char op)
 {
     const std::string UNDEF = "deadbeef";
     std::string mesValue;
@@ -189,6 +189,51 @@ char getRandOp(std::uniform_int_distribution<int> dist, std::mt19937& gen)
     constexpr std::array< char, 6 > opArray{ '+', '-', '*', '/', '^', '%' };
     const auto index = dist(gen);
     return opArray[index];
+}
+
+void scen01Loop(CProtocol& prot, const bool steppedMode)
+{
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> distValue(-50, +50);
+  std::uniform_int_distribution<int> distOperator(0, 5);
+
+  bool res { true };
+  while (res) {
+    res = scen01Step(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
+    if (steppedMode) {
+      std::cout << "Press Enter to continue..";
+      std::cin.get();
+    }
+  }
+}
+
+void scen02Loop(CProtocol& prot, const bool steppedMode)
+{
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> distValue(-50, +50);
+  std::uniform_int_distribution<int> distOperator(0, 5);
+  std::uniform_int_distribution<int> distOpValue(0, 2);
+
+  bool first{ true };
+  bool res { true };
+  while (res) {
+    int opVal = distOpValue(gen);
+    if (first)
+    {
+        if (opVal == 2)
+        {
+            opVal -= 1;
+        }
+        first = false;
+    }
+    res = scen02Step(prot, opVal, distValue(gen), getRandOp(distOperator, gen));
+    if (steppedMode) {
+      std::cout << "Press Enter to continue..";
+      std::cin.get();
+    }
+  }
 }
 
 std::unique_ptr<AnyOption> constructArgumentList()
@@ -269,31 +314,32 @@ int main(int argc, char** argv)
 
             CProtocol prot{ socketClient.get() };
 
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_int_distribution<int> distValue(-50, +50);
-            std::uniform_int_distribution<int> distOperator(0, 5);
-            std::uniform_int_distribution<int> distOpValue(0, 2);
+                        //std::random_device rd;
+                        //std::mt19937 gen(rd());
+                        //std::uniform_int_distribution<int> distValue(-50, +50);
+                        //std::uniform_int_distribution<int> distOperator(0, 5);
+                        //                                    //std::uniform_int_distribution<int> distOpValue(0, 2);
 
-      bool first{ true };
-      bool res { true };
-      while (res) {
-          int opVal = distOpValue(gen);
-          if (first)
-          {
-              if (opVal == 2)
-              {
-                  opVal -= 1;
-              }
-              first = false;
-          }
-        //res = scen00(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
-          res = scen01(prot, opVal, distValue(gen), getRandOp(distOperator, gen));
-        if (steppedMode) {
-          std::cout << "Press Enter to continue..";
-          std::cin.get();
-        }
-      }
+                        //                                    //bool first{ true };
+                        //bool res { true };
+                        //while (res) {
+                        //                                  //int opVal = distOpValue(gen);
+                        //                                  //if (first)
+                        //                                  //{
+                        //                                  //    if (opVal == 2)
+                        //                                  //    {
+                        //                                  //        opVal -= 1;
+                        //                                  //    }
+                        //                                  //    first = false;
+                        //                                  //}
+                        //  res = scen01_Step(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
+                        //                                  //res = scen02_Step(prot, opVal, distValue(gen), getRandOp(distOperator, gen));
+                        //  if (steppedMode) {
+                        //    std::cout << "Press Enter to continue..";
+                        //    std::cin.get();
+                        //  }
+                        //}
+            scen02Loop(prot, steppedMode);
     }
     else {
       --tryCount;
