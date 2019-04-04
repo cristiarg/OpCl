@@ -7,6 +7,8 @@
 #include "Protocol.h"
 #include "MessageDecoder.h"
 
+#include "anyoption.h"
+
 #include <array>
 #include <string>
 #include <sstream>
@@ -189,11 +191,72 @@ char getRandOp(std::uniform_int_distribution<int> dist, std::mt19937& gen)
     return opArray[index];
 }
 
-int main()
+std::unique_ptr<AnyOption> constructArgumentList()
+{
+  auto opt = std::make_unique<AnyOption>();
+
+  opt->setFlag('h');
+  opt->setOption('s');
+  opt->setOption('p');
+  opt->setFlag('w');
+  //opt->setFlag("erratic");
+
+  opt->addUsage("-s <server name> \n\t\t- server name to connect to (default: localhost");
+  opt->addUsage("-p <port number> \n\t\t- port number to connect to (must be above 1024; default: 5001)");
+  opt->addUsage("-w \n\t\t- stepped mode; wait after sending each operation (default: false)");
+  opt->addUsage("-h \n\t\t- this message and exit");
+
+  return opt;
+}
+
+std::tuple<std::string, int, bool> parseOptionsOrGetDefaults(const std::unique_ptr<AnyOption>& opts)
+{
+  const std::string serv = [&opts]() -> std::string {
+    auto s = opts->getValue('s');
+    if (s != nullptr) {
+      return s;
+    }
+    else {
+      return "127.0.0.1";
+    }
+  }();
+
+  const int port = [&opts]() -> int {
+    auto p = opts->getValue('p');
+    if (p != nullptr) {
+      int pInt { -1 };
+      const auto cnt = sscanf_s(p, "%d", &pInt);
+      if (cnt == 1 && pInt >= 1024) {
+        return pInt;
+      }
+      else {
+        return 5001;
+      }
+    }
+    else {
+      return 5001;
+    }
+  }();
+
+  const bool stepped = opts->getFlag('w');
+  
+  return std::make_tuple(serv, port, stepped);
+}
+
+int main(int argc, char** argv)
 {
     CWSAInitializer wsaInitializer;
 
-    CNetworkAddress networkAddress{ "127.0.0.1", 5001, SOCK_STREAM, IPPROTO_TCP };
+  auto opts = constructArgumentList();
+  opts->processCommandArgs(argc, argv);
+  if (opts->getFlag('h')) {
+    opts->printUsage();
+    return 0;
+  }
+
+  const auto [serverName, portNumber, steppedMode] = parseOptionsOrGetDefaults(opts);
+
+  CNetworkAddress networkAddress { serverName.c_str(), portNumber, SOCK_STREAM, IPPROTO_TCP };
 
     CSocketClient socketClient{ networkAddress };
 
@@ -212,18 +275,22 @@ int main()
             std::uniform_int_distribution<int> distOperator(0, 5);
             std::uniform_int_distribution<int> distOpValue(0, 2);
 
-            bool res{ true };
-            while (res) {
-                //res = scen00(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
-                res = scen01(prot, distOpValue(gen), distValue(gen), getRandOp(distOperator, gen));
-            }
+      bool res { true };
+      while (res) {
+        res = scen00(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
+
+        if (steppedMode) {
+          std::cout << "Press Enter to continue..";
+          std::cin.get();
         }
-        else {
-            --tryCount;
-            std::cout << "ERROR connecting to server; waiting for a few seconds... (" << tryCount << " tries left)" << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(3));
-        }
+      }
     }
+    else {
+      --tryCount;
+      std::cout << "ERROR connecting to server; waiting for a few seconds... (" << tryCount << " tries left)" << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+    }
+  }
 
     std::cout << "Execution terminated. Press Enter to close..";
     std::cin.get();
