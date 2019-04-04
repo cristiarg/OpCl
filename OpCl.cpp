@@ -140,21 +140,21 @@ bool scen01(CProtocol& prot, const int opType, const int value, const char op)
 
     auto parseResponse = [&] {
         CMessageDecoder decRespResult{ mesValue };
-        mesValue = UNDEF;
         if (decRespResult.getType() == EMessageType::eResult) {
             const int res = decRespResult.getValue();
             std::cout << "result from server: " << res << std::endl;
-            return true;
         }
         else if (decRespResult.getType() == EMessageType::eError) {
             std::cout << "ERROR from server: " << decRespResult.getErrorMessage() << std::endl;
-            return true;
+        }
+        else if (decRespResult.getType() != EMessageType::eOK){
+            std::cout << "ACK received" << std::endl;
         }
         else {
             std::cout << "ERROR from server: <unspecified>" << std::endl;
-            return true;
         }
-        return false;
+        mesValue = UNDEF;
+        return true;
     };
 
     auto checkStatus = [&](EStatus st) {
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
 
     CSocketClient socketClient{ networkAddress };
 
-    int tryCount{ 10 };
+    int tryCount{ 100 };
     while (tryCount > 0) {
         TOpenThenClose< CSocketClient > socketClientOpened(socketClient);
 
@@ -275,10 +275,20 @@ int main(int argc, char** argv)
             std::uniform_int_distribution<int> distOperator(0, 5);
             std::uniform_int_distribution<int> distOpValue(0, 2);
 
+      bool first{ true };
       bool res { true };
       while (res) {
-        res = scen00(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
-
+          int opVal = distOpValue(gen);
+          if (first)
+          {
+              if (opVal == 2)
+              {
+                  opVal -= 1;
+              }
+              first = false;
+          }
+        //res = scen00(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
+          res = scen01(prot, opVal, distValue(gen), getRandOp(distOperator, gen));
         if (steppedMode) {
           std::cout << "Press Enter to continue..";
           std::cin.get();
