@@ -244,7 +244,9 @@ std::unique_ptr<AnyOption> constructArgumentList()
   opt->setOption('s');
   opt->setOption('p');
   opt->setFlag('w');
-  //opt->setFlag("erratic");
+  opt->setFlag('r');
+    // random, send/recv random input/data to/from server
+    // this option is intentionally not documented below not documented
 
   opt->addUsage("-s <server name> \n\t\t- server name to connect to (default: localhost");
   opt->addUsage("-p <port number> \n\t\t- port number to connect to (must be above 1024; default: 5001)");
@@ -254,7 +256,7 @@ std::unique_ptr<AnyOption> constructArgumentList()
   return opt;
 }
 
-std::tuple<std::string, int, bool> parseOptionsOrGetDefaults(const std::unique_ptr<AnyOption>& opts)
+std::tuple<std::string, int, bool, bool> parseOptionsOrGetDefaults(const std::unique_ptr<AnyOption>& opts)
 {
   const std::string serv = [&opts]() -> std::string {
     auto s = opts->getValue('s');
@@ -284,62 +286,44 @@ std::tuple<std::string, int, bool> parseOptionsOrGetDefaults(const std::unique_p
   }();
 
   const bool stepped = opts->getFlag('w');
+
+  const bool randomMode = opts->getFlag('r');
   
-  return std::make_tuple(serv, port, stepped);
+  return std::make_tuple(serv, port, stepped, randomMode);
 }
 
 int main(int argc, char** argv)
 {
-    CWSAInitializer wsaInitializer;
+  CWSAInitializer wsaInitializer;
 
-  auto opts = constructArgumentList();
+  const auto opts = constructArgumentList();
   opts->processCommandArgs(argc, argv);
   if (opts->getFlag('h')) {
     opts->printUsage();
     return 0;
   }
 
-  const auto [serverName, portNumber, steppedMode] = parseOptionsOrGetDefaults(opts);
+  const auto [serverName, portNumber, steppedMode, randomMode] = parseOptionsOrGetDefaults(opts);
 
   CNetworkAddress networkAddress { serverName.c_str(), portNumber, SOCK_STREAM, IPPROTO_TCP };
 
-    CSocketClient socketClient{ networkAddress };
+  CSocketClient socketClient{ networkAddress };
 
-    int tryCount{ 100 };
-    while (tryCount > 0) {
-        TOpenThenClose< CSocketClient > socketClientOpened(socketClient);
+  int tryCount{ 100 };
+  while (tryCount > 0) {
+    TOpenThenClose< CSocketClient > socketClientOpened(socketClient);
 
-        if (socketClient.mf_bIsOpen()) {
-            tryCount = 0;
+    if (socketClient.mf_bIsOpen()) {
+      tryCount = 0;
 
-            CProtocol prot{ socketClient.get() };
+      CProtocol prot{ socketClient.get() };
 
-                        //std::random_device rd;
-                        //std::mt19937 gen(rd());
-                        //std::uniform_int_distribution<int> distValue(-50, +50);
-                        //std::uniform_int_distribution<int> distOperator(0, 5);
-                        //                                    //std::uniform_int_distribution<int> distOpValue(0, 2);
-
-                        //                                    //bool first{ true };
-                        //bool res { true };
-                        //while (res) {
-                        //                                  //int opVal = distOpValue(gen);
-                        //                                  //if (first)
-                        //                                  //{
-                        //                                  //    if (opVal == 2)
-                        //                                  //    {
-                        //                                  //        opVal -= 1;
-                        //                                  //    }
-                        //                                  //    first = false;
-                        //                                  //}
-                        //  res = scen01_Step(prot, distValue(gen), distValue(gen), getRandOp(distOperator, gen));
-                        //                                  //res = scen02_Step(prot, opVal, distValue(gen), getRandOp(distOperator, gen));
-                        //  if (steppedMode) {
-                        //    std::cout << "Press Enter to continue..";
-                        //    std::cin.get();
-                        //  }
-                        //}
-            scen02Loop(prot, steppedMode);
+      if (!randomMode) {
+        scen01Loop(prot, steppedMode);
+      }
+      else {
+        scen02Loop(prot, steppedMode);
+      }
     }
     else {
       --tryCount;
@@ -348,8 +332,8 @@ int main(int argc, char** argv)
     }
   }
 
-    std::cout << "Execution terminated. Press Enter to close..";
-    std::cin.get();
+  std::cout << "Execution terminated. Press Enter to close..";
+  std::cin.get();
 
-    return 0;
+  return 0;
 }
