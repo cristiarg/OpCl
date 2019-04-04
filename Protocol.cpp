@@ -70,6 +70,13 @@ EStatus CProtocol::sendError(const std::string& str) const
   return sendString(strMess);
 }
 
+EStatus CProtocol::sendQuit() const
+{
+  std::string strMess { "Q" };
+
+  return sendString(strMess);
+}
+
 EStatus CProtocol::sendString(const std::string& str) const
 {
   assert( isValid() );

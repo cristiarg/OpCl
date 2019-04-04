@@ -45,6 +45,7 @@ public:
   EStatus sendOperator(const char op) const;
   EStatus sendResult (const int val) const;
   EStatus sendError (const std::string& str) const;
+  EStatus sendQuit() const;
 
   EStatus recvMessage(std::string& str);
 
