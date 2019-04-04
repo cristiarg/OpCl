@@ -11,6 +11,7 @@ add_executable (OpCl
     "OpenThenClose.h"
     "Protocol.cpp" "Protocol.h"
     "MessageDecoder.cpp" "MessageDecoder.h"
+    "anyoption.cpp" "anyoption.h"
     "OpCl.cpp")
 
 add_definitions(/std:c++17)
